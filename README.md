@@ -23,6 +23,7 @@ For example, {"symbol": 2, "position": (1, 7)}.
 The position will produce 2 positions which is before and after from position 0 to 61. Position 0 representing a __*THROW*__ action and 1 to 61 will represent the position in the board. For example,
 position 1 represent (4, -4) in the Axial Coordinate system.
 
+```
                   ,-' `-._,-' `-._,-' `-._,-' `-._,-' `-.
                  |   1   |   2   |   3   |   4   |   5   |
                  |  4,-4 |  4,-3 |  4,-2 |  4,-1 |  4, 0 |
@@ -51,7 +52,7 @@ position 1 represent (4, -4) in the Axial Coordinate system.
                  |   56  |   57  |   58  |   59  |   60  |       | input |
                  | -4, 0 | -4, 1 | -4, 2 | -4, 3 | -4, 4 |       |  r, q |
                   `-._,-' `-._,-' `-._,-' `-._,-' `-._,-'         `-._,-'
-
+```
 >>ADD OBSERVATION SPACE
 
 In the step function, the action will be check against a validation function. This
