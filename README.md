@@ -17,7 +17,7 @@ and Position which is Box from 0 to 61 with shape (2, ). As there is 3 symbols f
 each player, add the result of action space by 1 (1, 2, 3) representing (ROCK, PAPER, SCISSOR).
 If player is *LOWER*, multiply the symbol by -1 to represent the lower pieces.
 
-Dict({"symbol": Discrete(3), "position": Box(0, 61, shape = (2,)})
+> Dict({"symbol": Discrete(3), "position": Box(0, 61, shape = (2,)})
 For example, {"symbol": 2, "position": (1, 7)}.
 
 The position will produce 2 positions which is before and after from position 0 to 61. Position 0 representing a __*THROW*__ action and 1 to 61 will represent the position in the board. For example,
@@ -55,6 +55,7 @@ position 1 represent (4, -4) in the Axial Coordinate system.
 ```
 >>ADD OBSERVATION SPACE
 
+#### *Step*
 In the step function, the action will be check against a validation function. This
 validation function will check if the move from before and after. If before is 0, then
 check against a throw function. If the move from before and after is valid then return
