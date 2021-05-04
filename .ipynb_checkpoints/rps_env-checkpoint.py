@@ -1,6 +1,18 @@
-import numpy as np
+from gym import Env
+from gym.spaces import Discrete, Box, Dict
+
 from state import *
 from copy import deepcopy
+
+import tensorflow as tf
+import numpy as np
+import random
+
+INVALID_ACTION_REWARD = -10
+VALID_ACTION_REWARD = 10
+WIN_REWARD = 100
+LOSS_REWARD = -100
+EAT_TOKEN = 10
 
 LEFT        = (0, -1)
 RIGHT       = (0, +1)
@@ -54,8 +66,32 @@ CELL_POS = {}
 for pos in range(len(GRID)):
     CELL_POS[pos] = GRID[pos]
 
-class RoPaSci360:
-    def __init__(self):
+class RoPaSci360_game(Env):
+    def __init__(self,
+                player = 'upper',
+                opponent = 'random',
+                log = 'True'):
+        
+        # Constants
+        self.max_turns = 360
+        self.log = log
+                
+        #
+        # Observation + Action spaces
+        # ---------------------------
+        #  Observations: RoPaSci board containing 61 hexes, with 9 types of maximum number of tokens for each player.
+        #  Actions: (Every board position) * (Every board position)
+        #
+        # Note: not every action is legal
+        #
+        
+        self.action_space = Dict({"symbol": Discrete(3), "position": Box(0, 61, shape = (2,))})
+        self.observation_space = Box(low = np.int8(0), high = np.int8(-1), shape = (9, 9), dtype = np.int8)
+        
+        self.player = player
+        self.player_2 = self.get_other_player()
+        self.opponent = opponent
+        
         self.board = None
         self.upper_pcs = None
         self.lower_pcs = None
@@ -70,66 +106,39 @@ class RoPaSci360:
         self.lower_turns = 0
         
         self.reset()
-
-    def reset(self, player = 'upper', random_player = True):
-        self.board = self.new_board()
-        self.game_state = None
-        self.turn = 0
-
-
+    
+    def seed(self ):pass
+        
+    def step(self, action):
+        assert self.action_space.contains(action), "ACTION ERROR {}".format(action)
+        
+        reward = 0
+        info = {'turn' : self.game.upper_turns,
+                'move_type' : None,
+                'player' : self.player}
+        
+        symbol = action['symbol']
+        pos1, pos2 = action['position']
+        piece = (symbol, pos1, pos2)
+        print(symbol)
+        print(pos1, pos2)
+                
+    def reset(self):
+        self.board = self.game.new_board()
+        
     def render(self):
-        inbound = np.where(self.board != TOKEN_VOID)
-        inbound = [i for i in list(zip(inbound[0], inbound[1]))]
-        token_pos = [i for i in inbound if self.board[i[0]][i[1]] != TOKEN_EMPTY]
-        tokens = [self.board[i[0]][i[1]] for i in token_pos]
-        symbols = []
-        for t in tokens:
-            if t in (1, 2, 3):
-                symbols.append(('R', 'P', 'S')[t - 1])
-            if t in (-1, -2, -3):
-                symbols.append(('r', 'p', 's')[abs(t) - 1])
-        new_board = deepcopy(self.board)
-        for i in range(len(token_pos)):
-            (x, y) = token_pos[i]
-            new_board[x][y] = symbols[i]
-
-        template ="""
-####################### RoPaSci360 ########################
-#                                                         #
-#              .-'-._.-'-._.-'-._.-'-._.-'-.              #
-#             |{00:}|{01:}|{02:}|{03:}|{04:}|             #
-#           .-'-._.-'-._.-'-._.-'-._.-'-._.-'-.           #
-#          |{05:}|{06:}|{07:}|{08:}|{09:}|{10:}|          #
-#        .-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-.        #
-#       |{11:}|{12:}|{13:}|{14:}|{15:}|{16:}|{17:}|       #
-#     .-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-.     #
-#    |{18:}|{19:}|{20:}|{21:}|{22:}|{23:}|{24:}|{25:}|    #
-#  .-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-.  #
-# |{26:}|{27:}|{28:}|{29:}|{30:}|{31:}|{32:}|{33:}|{34:}| #
-# '-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-' #
-#    |{35:}|{36:}|{37:}|{38:}|{39:}|{40:}|{41:}|{42:}|    #
-#    '-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'    #
-#       |{43:}|{44:}|{45:}|{46:}|{47:}|{48:}|{49:}|       #
-#       '-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'       #
-#          |{50:}|{51:}|{52:}|{53:}|{54:}|{55:}|          #
-#          '-._.-'-._.-'-._.-'-._.-'-._.-'-._.-'          #
-#             |{56:}|{57:}|{58:}|{59:}|{60:}|             #
-#             '-._.-'-._.-'-._.-'-._.-'-._.-'             #
-#                                                         #
-###########################################################"""
-
-        cells = list()
-        for coord in inbound:
-            if coord in token_pos:
-                cell = str(new_board[coord[0]][coord[1]]).center(5)
-            else:
-                cell = "     "
-            cells.append(cell)
-        # fill in the template to create the board drawing, then print!
-        board = template.format(*cells)
-        print(board)
-
-
+        pass
+    
+    def get_other_player(self):
+        if self.player == 'upper':
+            return 'lower'
+        elif self.player == 'lower':
+            return 'upper'
+    
+    def random_agent(self):
+        possible_moves = self.game.possible_moves(player = self.player_2)
+        return np.random.choice(possible_moves)
+    
     @staticmethod
     def new_board():
         """
@@ -382,14 +391,3 @@ class RoPaSci360:
         if self.upper_turns == self.lower_turns:
             upper = self.get_upper(upper_board)
             print(upper)
-
-
-
-    """
-    TODO:
-    POSSIBLE MOVES
-    VALIDATE MOVES
-    UPDATE FUNCTION
-
-
-    """

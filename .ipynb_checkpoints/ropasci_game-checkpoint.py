@@ -18,7 +18,6 @@ BOARD_SIZE = 9
 
 N_THROWS = 9
 
-BEATS_WHAT = {'r': 's', 'p': 'r', 's': 'p'}
 WHAT_BEATS = {'r': 'p', 'p': 's', 's': 'r'}
 
 MAX_TURNS = 360
@@ -37,6 +36,10 @@ LOWER = (rock, paper, scissor)
 
 SYMBOLS = {(1): 'R', (2): 'P', (3): 'S',
            (-1): 'r', (-2): 'p', (-3): 's'}
+
+BEATS_WHAT = {ROCK: scissor, PAPER: rock, SCISSOR: paper,
+              rock: SCISSOR, paper: ROCK, scissor: PAPER}
+
 # Axial grid system
 GRID = [(4, -4), (4, -3), (4, -2), (4, -1), (4, 0),
         (3, -4), (3, -3), (3, -2), (3, -1), (3, 0), (3, 1),
@@ -63,12 +66,16 @@ class RoPaSci360:
         # Current
         self.upper_throws = 9
         self.lower_throws = 9
-        self.upper_turns = None
-        self.lower_turns = None
-        self.game_state = None
+        self.upper_turns = 0
+        self.lower_turns = 0
+        
+        self.reset()
 
-    def reset(self, player = 'Upper', random_player = True):
-        self.board = new_board()
+    def reset(self, player = 'upper', random_player = True):
+        self.board = self.new_board()
+        self.game_state = None
+        self.turn = 0
+
 
     def render(self):
         inbound = np.where(self.board != TOKEN_VOID)
@@ -166,20 +173,20 @@ class RoPaSci360:
         res = np.where(board == symbol)
         return [(symbol, p[0], p[1]) for p in list(zip(res[0], res[1]))]
 
-    def get_upper(self):
+    def get_upper(self, board):
         upper = list()
         for symbol in UPPER:
-            for i in self.get_tokens(self.board, symbol):
+            for i in self.get_tokens(board, symbol):
                 (s, x, y) = i
                 coord = self.convert_to_axial((x, y))
                 (r, q) = coord
                 upper.append((symbol, r , q))
         return upper
 
-    def get_lower(self):
+    def get_lower(self, board):
         lower = list()
         for symbol in LOWER:
-            for i in self.get_tokens(self.board, symbol):
+            for i in self.get_tokens(board, symbol):
                 (s, x, y) = i
                 coord = self.convert_to_axial((x, y))
                 (r, q) = coord
@@ -250,13 +257,13 @@ class RoPaSci360:
         pivot = list()
         for n in nbr:
             (s_b, x, y) = n
-            if player == 'Upper':
-                tokens = self.get_upper()
+            if player == 'upper':
+                tokens = self.get_upper(self.board)
                 for s in UPPER:
                     if (s, x, y) in tokens:
                         pivot.append((s, x, y))
-            if player == 'Lower':
-                tokens = self.get_lower()
+            if player == 'lower':
+                tokens = self.get_lower(self.board)
                 for s in LOWER:
                     if (s, x, y) in tokens:
                         pivot.append((s, x, y))
@@ -266,13 +273,14 @@ class RoPaSci360:
                 if n != before and n not in nbr:
                     swing.append(n)
         swing = list(dict.fromkeys(swing))
+        swing = list(filter(self.inbound, swing))
         if possible:
             return [("SWING", before, s) for s in swing]
         if after in swing:
             return ("SWING", before, after)
         return False
 
-    def check_throw(self, player, token = None, possible = False):
+    def check_throw(self, player, token, possible = False):
         """
         Input: token - a token piece
                * (s, r, q) s is in number format, where r and q is in
@@ -287,20 +295,20 @@ class RoPaSci360:
                 if move not valid return false.
         """
         throwable = []
-        if player == 'Upper':
+        if player == 'upper':
             for s in UPPER:
                 for coord in GRID:
                     if coord[0] >= self.upper_throws - 5:
                         throwable.append(("THROW", s, coord))
 
-        if player == 'Lower':
+        if player == 'lower':
             for s in LOWER:
                 for coord in GRID:
                     if coord[0] <= 5 - self.lower_throws:
                         throwable.append(("THROW", s, coord))
         if possible:
             return throwable
-        else:
+        elif token:
             (s, r, q) = token # s is number format
             if ("THROW", s, (r, q)) in throwable:
                 return ("THROW", None, token)
@@ -322,32 +330,30 @@ class RoPaSci360:
         Output: returning the action type and before after
                 if move not valid return false.
         """
-
-        after = CELL_POS[after - 1] # Convert into axial format
-        (r2, q2) = after
-
+        after = CELL_POS[after - 1]
+        after = (symbol, after[0], after[1])
         # If the select a throw action
         if before == 0:
-            return self.check_throw(player, (symbol, r2, q2))
+            return self.check_throw(player, after)
 
         pieces = []
-        if player == 'Upper':
-            pieces = self.get_upper()
-        elif player == 'Lower':
-            pieces = self.get_lower()
+        if player == 'upper':
+            pieces = self.get_upper(self.board)
+        elif player == 'lower':
+            pieces = self.get_lower(self.board)
 
-        before = CELL_POS[before - 1] # Convert into axial format
-        (r1, q1) = before
-
+        before = CELL_POS[before - 1]
+        before = (symbol, before[0], before[1])
         # If selected piece not in any of the available pieces.
-        if (symbol, r1, q1) not in pieces:
+        if before not in pieces:
             return False
 
-        move_check = self.check_swing((symbol, r1, q1), (symbol, r2, q2), player)
+        move_check = self.check_swing(player, before = before, after = after)
+        print(move_check)
         if move_check:
             return move_check
 
-        move_check = self.check_slide((symbol, r1, q1), (symbol, r2, q2))
+        move_check = self.check_slide(before, after)
         if move_check:
             return move_check
 
@@ -355,8 +361,29 @@ class RoPaSci360:
 
     def possible_moves(self, player):
         possible = True
-        throw = self.check_throw(player, possible)
-        print(throw)
+        actions = list()
+        actions.extend(self.check_throw(player, token=None, possible=possible))
+        if player == 'upper':
+            pieces = self.get_upper(self.board)
+        if player == 'lower':
+            pieces = self.get_lower(self.board)
+        for p in pieces:
+            actions.extend(self.check_slide(p, possible=possible))
+            actions.extend(self.check_swing(player = player, before = p, possible=possible))
+        return actions
+
+    def action_handler(self, symbol, before, after, player):
+        move_check = self.validate_moves(symbol, before, after, player)
+        if move_check:
+            return move_check
+        return False
+
+    def update(self, upper_board, lower_board):
+        if self.upper_turns == self.lower_turns:
+            upper = self.get_upper(upper_board)
+            print(upper)
+
+
 
     """
     TODO:

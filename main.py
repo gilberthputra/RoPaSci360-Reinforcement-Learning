@@ -1,24 +1,18 @@
-from ropasci_game import *
+from rps_env import *
 
 def main():
-    g = RoPaSci360()
-
-
-    g.board = g.new_board()
-
-    g.board[2, 6] = ROCK
-    g.board[8, 8] = scissor
-    g.board[7, 7] = scissor
+    env = RoPaSci360_game()
+    env.reset()
+    env.board[0, 0] = ROCK
+    env.board[0, 2] = paper
     #upper = g.get_upper()
     #lower = g.get_lower()
 
     #for i in lower:
     #    print(g.check_swing((scissor, -4, 4), (scissor, -2, 2), 'Lower'))"""
-    g.render()
-    g.possible_moves('upper')
-    g.possible_moves('lower')
-    u = g.action_handler(1, 18, 25, 'upper')
-    l = g.action_handler(-3, 61, 48, 'lower')
-
+    #g.render()
+    #print(g.possible_moves('upper'))
+    #print(g.possible_moves('lower'))
+    env.update(('SLIDE', (1, 4,-4), (1, 4, -3)),('SLIDE', (-2, 4,-2), (-2, 4, -3)))
 
 main()
