@@ -1,5 +1,5 @@
 from gym import Env
-from gym.Spaces import Discrete, Box, Dict
+from gym.spaces import Discrete, Box, Dict
 
 from state import *
 from copy import deepcopy
@@ -71,7 +71,7 @@ class RoPaSci360(Env):
         #
 
         self.action_space = Dict({"symbol": Discrete(3), "position": Box(0, 61, shape = (2,), dtype=np.int8)})
-        self.observation_space = Dict({'upper': Box(low = np.int8(0), high = np.int8(-1), shape = (9, 3), dtype = np.int8), 
+        self.observation_space = Dict({'upper': Box(low = np.int8(0), high = np.int8(-1), shape = (9, 3), dtype = np.int8),
                                        'lower': Box(low = np.int8(0), high = np.int8(-1), shape = (9, 3), dtype = np.int8)})
 
         self.player_1 = player
@@ -81,8 +81,8 @@ class RoPaSci360(Env):
         self.reset()
 
     def reset(self):
-        self.pieces = {'upper': np.full((9, 3), 0, dtype = np.int8), 'lower': np.full((9, 3), 0, dtype = np.int8)}
-        s
+        self.pieces = {'upper': np.full((9, 3), 0, dtype = np.int8),
+                       'lower': np.full((9, 3), 0, dtype = np.int8)}
         self.upper_inv = None
         self.lower_inv = None
         self.upper_throws = MAX_THROWS
@@ -90,7 +90,7 @@ class RoPaSci360(Env):
 
         self.upper_turn = 0
         self.lower_turn = 0
-        
+
         self.done = False
 
     def render(self): pass
