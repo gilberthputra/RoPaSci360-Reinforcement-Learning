@@ -14,6 +14,11 @@ def main():
 
     #for i in lower:
     #    print(g.check_swing((scissor, -4, 4), (scissor, -2, 2), 'Lower'))"""
-    print(g.validate_moves(-3, 0, 61, 'Lower'))
-    g.possible_moves('Upper')
+    g.render()
+    g.possible_moves('upper')
+    g.possible_moves('lower')
+    u = g.action_handler(1, 18, 25, 'upper')
+    l = g.action_handler(-3, 61, 48, 'lower')
+
+
 main()
