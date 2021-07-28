@@ -5,7 +5,7 @@ import tensorflow as tf
 def main():
     env = RoPaSci360()
     env.reset()
-    
+    print(env.observation_space.sample())
     #empty = (0, 0, 0)
     #before = (1, 0, 0)
     #after = (3, 0, 0)
@@ -19,7 +19,7 @@ def main():
     #print(pieces, reward, done, info)
     #print(pieces)
     #print(reward, done, info)
-    
+    """
     episodes = 10
     for episode in range(1, episodes+1):
         state = env.reset()
@@ -34,5 +34,5 @@ def main():
             score+=reward
         print(info['turn'])
         print('Episode:{} Score:{}'.format(episode, score))
-        
+        """
 main()
